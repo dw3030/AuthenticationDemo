@@ -42,8 +42,9 @@ app.post("/register", async (req, res) => {
     password: hash,
   });
   await user.save();
+
   req.session.user_id = user._id;
-  res.redirect("/");
+  res.redirect("/secret");
 });
 
 app.get("/login", (req, res) => {
@@ -62,11 +63,17 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/logout", (req, res) => {
+  req.session.user_id = null;
+  //   req.session.destroy();  // use this to get rid of the whole session
+  res.redirect("/login");
+});
+
 app.get("/secret", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
+    return res.redirect("/login");
   }
-  res.send("This is Secret!! You cannot see me unless you are logged in!");
+  res.render("secret");
 });
 
 app.listen(3000, () => {
