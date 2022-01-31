@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const User = require("./models/user");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-const res = require("express/lib/response");
 
 mongoose
   .connect("mongodb://localhost:27017/loginDemo", {
@@ -44,13 +43,11 @@ app.get("/register", (req, res) => {
 
 app.post("/register", async (req, res) => {
   const { password, username } = req.body;
-  const hash = await bcrypt.hash(password, 12);
   const user = new User({
     username,
-    password: hash,
+    password,
   });
   await user.save();
-
   req.session.user_id = user._id;
   res.redirect("/secret");
 });
@@ -61,10 +58,9 @@ app.get("/login", (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (validPassword) {
-    req.session.user_id = user._id;
+  const foundUser = await User.findAndValidate(username, password);
+  if (foundUser) {
+    req.session.user_id = foundUser._id;
     res.redirect("/secret");
   } else {
     res.redirect("/login");
