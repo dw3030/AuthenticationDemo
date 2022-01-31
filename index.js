@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const User = require("./models/user");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
+const res = require("express/lib/response");
 
 mongoose
   .connect("mongodb://localhost:27017/loginDemo", {
@@ -25,6 +26,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   session({ secret: "notagoodsecret", resave: false, saveUninitialized: false })
 );
+
+const requireLogin = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+};
 
 app.get("/", (req, res) => {
   res.send("This is the HOME page!");
@@ -69,11 +77,12 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-app.get("/secret", (req, res) => {
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
+app.get("/secret", requireLogin, (req, res) => {
   res.render("secret");
+});
+
+app.get("/topsecret", requireLogin, (req, res) => {
+  res.send("Top Secret!!!");
 });
 
 app.listen(3000, () => {
